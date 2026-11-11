@@ -22,3 +22,11 @@ await updateSession({ name: s.name, config: { ...(s.config || {}), webhooks } })
 console.log(`✅ Webhook configurado: ${url.replace(config.waha.webhookSecret, '***')}`);
 if (others.length) console.log(`   (${others.length} webhook(s) existente(s) mantido(s))`);
 if (s.status !== 'WORKING') console.warn('⚠️  A sessão não está WORKING. Escaneie o QR code no painel do WAHA.');
+
+// Confere se o endereço do webhook responde (é por ele que o WAHA vai chamar o app)
+try {
+  const r = await fetch(`${config.publicUrl}/health`, { signal: AbortSignal.timeout(10000) });
+  console.log(r.ok ? `✅ ${config.publicUrl} está acessível` : `⚠️  ${config.publicUrl}/health respondeu ${r.status}`);
+} catch (e) {
+  console.warn(`⚠️  Não consegui acessar ${config.publicUrl} daqui (${e.cause?.code || e.message}). Confira o túnel/DNS e o PUBLIC_URL.`);
+}

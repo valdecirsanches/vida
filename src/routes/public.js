@@ -107,14 +107,22 @@ async function findElderByChat(from, payload) {
 }
 
 pub.post('/webhooks/waha/:secret', express.json({ limit: '5mb' }), async (req, res) => {
-  if (req.params.secret !== config.waha.webhookSecret) return res.status(403).end();
+  if (req.params.secret !== config.waha.webhookSecret) {
+    console.warn('[waha] webhook recusado: segredo da URL não confere com WAHA_WEBHOOK_SECRET');
+    return res.status(403).end();
+  }
   res.json({ ok: true }); // responde rápido; processa em segundo plano
   handleWaha(req.body).catch(err => console.error('[webhook waha]', err));
 });
 
 async function handleWaha(evt) {
-  if (!evt || (evt.session && evt.session !== config.waha.session)) return;
+  if (!evt) return;
   const p = evt.payload || {};
+  console.log(`[waha] evento "${evt.event}" da sessão "${evt.session}" de ${p.from || '?'}${p.fromMe ? ' (enviado por nós)' : ''}`);
+  if (evt.session && evt.session !== config.waha.session) {
+    console.warn(`[waha] ignorado: sessão "${evt.session}" diferente de WAHA_SESSION="${config.waha.session}"`);
+    return;
+  }
 
   if (evt.event === 'call.received') {
     if (!p.from || p.isGroup) return;
@@ -140,7 +148,8 @@ const inFlight = new Set();
 
 async function handleIncoming(p) {
   const elder = await findElderByChat(p.from, p);
-  if (!elder) return; // número desconhecido: ignora
+  if (!elder) { console.log(`[waha] ${p.from} não é de nenhuma pessoa cadastrada (com convite enviado): ignorado`); return; }
+  console.log(`[waha] mensagem de ${elder.call_name} (#${elder.id}, status ${elder.status})${p.hasMedia ? ' com áudio' : `: "${String(p.body || '').slice(0, 60)}"`}`);
 
   const mediaUrl = p.media?.url || p.mediaUrl;
   const mimetype = p.media?.mimetype || p._data?.mimetype || '';
