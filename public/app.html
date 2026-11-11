@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raízes · Painel da família</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌳</text></svg>">
+<link rel="stylesheet" href="/styles.css">
+<style>
+  header.bar { border-bottom: 1px solid var(--line); background: var(--card); position: sticky; top: 0; z-index: 10; }
+  header.bar .wrap { height: 62px; display: flex; align-items: center; justify-content: space-between; }
+  .logo { font: 600 20px var(--serif); color: var(--ink); text-decoration: none; }
+  header.bar nav { display: flex; gap: 18px; align-items: center; font-size: 15px; }
+  header.bar nav a { color: var(--ink-2); text-decoration: none; font-weight: 500; }
+  main { padding: 40px 0 80px; min-height: 70vh; }
+  .auth { max-width: 420px; margin: 40px auto; padding: 36px; }
+  .auth h1 { font-size: 32px; }
+  .page-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+  .page-head h1 { font-size: 38px; margin: 0; font-weight: 300; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 18px; }
+  .elder { padding: 24px; text-decoration: none; color: inherit; display: block; transition: transform .15s; }
+  .elder:hover { transform: translateY(-2px); }
+  .elder .av { width: 54px; height: 54px; border-radius: 50%; background: var(--paper-2); display: grid; place-items: center; font: 400 24px var(--serif); color: var(--accent); margin-bottom: 14px; }
+  .elder h3 { font-size: 22px; margin-bottom: 2px; }
+  .elder .stats { display: flex; gap: 16px; margin-top: 14px; font-size: 14px; color: var(--ink-2); }
+  .add { border: 2px dashed var(--line); background: transparent; box-shadow: none; display: grid; place-items: center; min-height: 200px; color: var(--ink-2); font-weight: 600; }
+  .banner { padding: 18px 22px; margin-bottom: 24px; display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; background: linear-gradient(120deg, #fff6ec, #f7e3d3); }
+  .banner.cfg { background: #fff8e6; border-color: #f0dfb0; }
+  .form { max-width: 720px; padding: 32px; }
+  .form h2 { font-size: 22px; margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--line); }
+  .form h2:first-of-type { margin-top: 0; padding-top: 0; border: 0; }
+  .seg { display: flex; gap: 8px; flex-wrap: wrap; }
+  .seg label { margin: 0; font-weight: 500; display: flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 12px; cursor: pointer; background: #fff; }
+  .seg input { width: auto; }
+  .seg label:has(input:checked) { border-color: var(--accent); background: #fff6ef; }
+  .profile-head { display: flex; gap: 22px; align-items: center; margin-bottom: 22px; flex-wrap: wrap; }
+  .profile-head .av { width: 76px; height: 76px; border-radius: 50%; background: var(--paper-2); display: grid; place-items: center; font: 400 34px var(--serif); color: var(--accent); }
+  .profile-head h1 { font-size: 36px; margin: 0; font-weight: 300; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 6px 0 26px; }
+  .tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
+  .tabs a { padding: 10px 16px; text-decoration: none; color: var(--ink-2); font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tabs a.on { color: var(--accent); border-color: var(--accent); }
+  .story { padding: 28px; margin-bottom: 18px; }
+  .story .ch { font: 700 11px var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+  .story h3 { font-size: 26px; margin: 8px 0 14px; }
+  .story .body { font-family: var(--serif); font-weight: 300; font-size: 17px; line-height: 1.75; } .story .body p { margin: 0 0 .8em; }
+  .story audio { width: 100%; margin-top: 8px; }
+  .story .tools { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .conv { padding: 22px; margin-bottom: 16px; }
+  .conv .q { font: 400 19px var(--serif); margin-bottom: 12px; }
+  .msg { padding: 10px 14px; border-radius: 12px; margin: 8px 0; max-width: 88%; font-size: 15px; }
+  .msg.out { background: var(--paper-2); }
+  .msg.in { background: var(--sage-bg); margin-left: auto; }
+  .msg audio { width: 100%; height: 36px; margin-top: 6px; }
+  .msg small { display: block; color: var(--soft); font-size: 12px; margin-top: 4px; }
+  .linkbox { display: flex; gap: 8px; } .linkbox input { font-size: 14px; }
+  .empty { text-align: center; padding: 50px 20px; color: var(--ink-2); }
+  .empty .big { font-size: 46px; }
+  .modal-bg { position: fixed; inset: 0; background: #3b2a1e66; display: grid; place-items: center; z-index: 50; padding: 20px; }
+  .modal { width: min(720px, 100%); max-height: 90vh; overflow: auto; padding: 28px; }
+  .modal textarea { min-height: 320px; font-family: var(--serif); font-size: 16px; line-height: 1.7; }
+  .plans { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; } @media (max-width: 720px) { .plans { grid-template-columns: 1fr; } }
+  .plans .card { padding: 28px; }
+  .plans .amount { font: 300 44px var(--serif); margin: 10px 0; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 14px; } table.t td, table.t th { padding: 8px; border-bottom: 1px solid var(--line); text-align: left; }
+</style>
+</head>
+<body>
+<header class="bar"><div class="wrap">
+  <a class="logo" href="#/">🌳 Raízes</a>
+  <nav id="nav"></nav>
+</div></header>
+<main><div class="wrap" id="view"></div></main>
+<div class="toast" id="toast"></div>
+<script src="/app.js"></script>
+</body>
+</html>

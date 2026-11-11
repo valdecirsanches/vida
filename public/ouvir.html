@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Raízes · Ouça esta história</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌳</text></svg>">
+<link rel="stylesheet" href="/styles.css">
+<style>
+  body { background: radial-gradient(ellipse at top, #fff7ec, var(--paper) 60%); min-height: 100vh; }
+  main { max-width: 640px; margin: 0 auto; padding: 40px 22px 70px; }
+  .brand { text-align: center; font: 600 18px var(--serif); color: var(--sage); margin-bottom: 30px; }
+  .who { text-align: center; color: var(--ink-2); }
+  h1 { text-align: center; font-size: clamp(32px, 6vw, 46px); font-weight: 300; margin: 8px 0 30px; }
+  .player { display: flex; align-items: center; gap: 18px; padding: 20px 22px; margin-bottom: 34px; }
+  .play { width: 70px; height: 70px; flex: none; border-radius: 50%; border: 0; background: var(--accent); color: #fff; cursor: pointer; display: grid; place-items: center; box-shadow: 0 8px 22px #b4552d55; }
+  .play svg { width: 28px; height: 28px; }
+  .bar { flex: 1; height: 8px; background: var(--paper-2); border-radius: 99px; overflow: hidden; cursor: pointer; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .2s linear; }
+  .meta { font-size: 14px; color: var(--soft); margin-top: 6px; display: flex; justify-content: space-between; }
+  .body { font: 300 19px/1.8 var(--serif); }
+  .body p { margin: 0 0 1em; }
+  .body p:first-child::first-letter { float: left; font-size: 62px; line-height: .85; padding: 6px 10px 0 0; color: var(--accent); font-weight: 400; }
+  .cta { text-align: center; margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--line); color: var(--ink-2); }
+</style>
+</head>
+<body>
+<main id="m"><p class="center muted">Carregando…</p></main>
+<script>
+const T = location.pathname.split('/').pop();
+const esc = (s = '') => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>', PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
+(async () => {
+  const r = await fetch(`/api/ouvir/${T}`);
+  const m = document.getElementById('m');
+  if (!r.ok) { m.innerHTML = '<h1>História não encontrada</h1>'; return; }
+  const s = await r.json();
+  document.title = `${s.title} · ${s.elder.call_name}`;
+  m.innerHTML = `<div class="brand">🌳 Raízes</div>
+    <div class="who">Uma história de <b>${esc(s.elder.call_name)}</b></div>
+    <h1>${esc(s.title)}</h1>
+    ${s.audios.length ? `<div class="player card"><button class="play" id="pb">${PLAY}</button>
+      <div style="flex:1"><div class="bar" id="bar"><i id="fill"></i></div><div class="meta"><span id="part">Na voz de ${esc(s.elder.call_name)}</span><span id="time"></span></div></div></div>` : ''}
+    <div class="body">${s.body.split(/\n+/).filter(Boolean).map(p => `<p>${esc(p)}</p>`).join('')}</div>
+    <div class="cta"><p>Guarde também as histórias de quem você ama.</p><a class="btn" href="/">Conhecer o Raízes</a></div>`;
+  if (!s.audios.length) return;
+  // toca os áudios em sequência como uma faixa só
+  let i = 0; const a = new Audio(); const set = () => { a.src = `/api/ouvir/${T}/audio/${s.audios[i]}`; };
+  set();
+  const pb = document.getElementById('pb'), fill = document.getElementById('fill'), time = document.getElementById('time'), part = document.getElementById('part');
+  const fmt = (x) => isFinite(x) ? `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}` : '';
+  pb.onclick = () => a.paused ? a.play() : a.pause();
+  a.onplay = () => pb.innerHTML = PAUSE; a.onpause = () => pb.innerHTML = PLAY;
+  a.ontimeupdate = () => { fill.style.width = (a.currentTime / (a.duration || 1) * 100) + '%'; time.textContent = fmt(a.currentTime) + (isFinite(a.duration) ? ' / ' + fmt(a.duration) : ''); };
+  a.onended = () => { if (++i < s.audios.length) { set(); part.textContent = `Parte ${i + 1} de ${s.audios.length}`; a.play(); } else { i = 0; set(); pb.innerHTML = PLAY; } };
+  document.getElementById('bar').onclick = (e) => { if (isFinite(a.duration)) a.currentTime = (e.offsetX / e.currentTarget.clientWidth) * a.duration; };
+})();
+</script>
+</body>
+</html>

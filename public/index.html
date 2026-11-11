@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Raízes: as histórias da sua família, na voz de quem viveu</title>
+<meta name="description" content="Toda semana o Raízes conversa por áudio no WhatsApp com quem você ama. As histórias viram um livro com QR codes que tocam a voz de quem contou.">
+<meta property="og:title" content="Raízes: a voz de quem você ama, guardada para sempre">
+<meta property="og:description" content="Conversas semanais por áudio no WhatsApp que viram um livro de memórias com a voz original.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌳</text></svg>">
+<link rel="stylesheet" href="/styles.css">
+<style>
+  nav.top { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(10px); background: #fbf6eedd; border-bottom: 1px solid transparent; transition: border .2s; }
+  nav.top.scrolled { border-color: var(--line); }
+  nav.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+  .logo { display: flex; align-items: center; gap: 10px; font: 600 22px var(--serif); color: var(--ink); text-decoration: none; }
+  .logo svg { width: 30px; height: 30px; }
+  nav.top .links { display: flex; gap: 26px; align-items: center; }
+  nav.top .links a { color: var(--ink-2); text-decoration: none; font-weight: 500; font-size: 15px; }
+  nav.top .links a:hover { color: var(--ink); }
+  @media (max-width: 760px) { nav.top .links a.hide-m { display: none; } }
+
+  .hero { padding: 64px 0 40px; position: relative; overflow: hidden; }
+  .hero .wrap { display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; }
+  .hero h1 { font-size: clamp(42px, 6vw, 72px); font-weight: 300; }
+  .hero p.lead { font-size: 20px; color: var(--ink-2); max-width: 30em; margin: 0 0 30px; }
+  .hero .ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+  .hero .note { margin-top: 16px; font-size: 14px; color: var(--soft); }
+  @media (max-width: 900px) { .hero .wrap { grid-template-columns: 1fr; } .phone { margin: 0 auto; } }
+
+  /* celular com conversa de WhatsApp */
+  .phone { width: 320px; background: #1d1712; border-radius: 44px; padding: 12px; box-shadow: 0 30px 60px #3b2a1e40, 0 0 0 1px #0003; transform: rotate(2deg); }
+  .screen { background: #efe7dd url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='2' cy='2' r='1' fill='%23d8ccbc'/%3E%3C/svg%3E"); border-radius: 34px; overflow: hidden; height: 600px; display: flex; flex-direction: column; }
+  .wa-head { background: #075e54; color: #fff; padding: 34px 16px 12px; display: flex; gap: 10px; align-items: center; }
+  .wa-head .av { width: 36px; height: 36px; border-radius: 50%; background: #f3eadb; display: grid; place-items: center; font-size: 18px; }
+  .wa-head b { display: block; font-size: 15px; } .wa-head small { opacity: .8; font-size: 12px; }
+  .chat { flex: 1; padding: 14px 10px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+  .b { max-width: 82%; padding: 7px 10px 6px; border-radius: 10px; font-size: 13.5px; line-height: 1.4; box-shadow: 0 1px 1px #0001; position: relative; opacity: 0; transform: translateY(8px); animation: pop .4s forwards; }
+  .b.in { background: #fff; align-self: flex-start; border-top-left-radius: 2px; }
+  .b.out { background: #dcf8c6; align-self: flex-end; border-top-right-radius: 2px; }
+  .b time { display: block; text-align: right; font-size: 10.5px; color: #8a8a8a; margin-top: 2px; }
+  .voice { display: flex; align-items: center; gap: 8px; min-width: 190px; }
+  .voice .play { width: 0; height: 0; border-left: 11px solid #6b7c85; border-top: 7px solid transparent; border-bottom: 7px solid transparent; }
+  .voice .wave { flex: 1; height: 22px; display: flex; align-items: center; gap: 2px; }
+  .voice .wave i { flex: 1; background: #9fb0b8; border-radius: 2px; }
+  .b.out .voice .wave i { background: #7fae6b; }
+  .voice .dur { font-size: 11px; color: #777; }
+  .voice .face { width: 28px; height: 28px; border-radius: 50%; background: #f3eadb; display: grid; place-items: center; font-size: 15px; }
+  @keyframes pop { to { opacity: 1; transform: none; } }
+  .b:nth-child(1) { animation-delay: .3s } .b:nth-child(2) { animation-delay: 1.1s } .b:nth-child(3) { animation-delay: 2.2s } .b:nth-child(4) { animation-delay: 3.4s } .b:nth-child(5) { animation-delay: 4.6s } .b:nth-child(6) { animation-delay: 5.6s }
+
+  .strip { border-block: 1px solid var(--line); background: var(--paper-2); }
+  .strip .wrap { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; padding-block: 18px; font-weight: 600; color: var(--ink-2); font-size: 15px; }
+  .strip span::before { content: '✦'; color: var(--accent); margin-right: 10px; }
+
+  section.block { padding: 96px 0; }
+  section.block h2 { font-size: clamp(32px, 4.4vw, 50px); font-weight: 300; }
+  .section-head { max-width: 640px; margin: 0 auto 56px; text-align: center; }
+  .section-head p { font-size: 18px; color: var(--ink-2); }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; counter-reset: s; }
+  .step { padding: 30px; position: relative; }
+  .step::before { counter-increment: s; content: counter(s); font: 300 56px/1 var(--serif); color: var(--accent); opacity: .85; display: block; margin-bottom: 14px; }
+  .step h3 { font-size: 23px; }
+  .step p { color: var(--ink-2); margin: 0; }
+  @media (max-width: 860px) { .steps { grid-template-columns: 1fr; } }
+
+  .story-demo { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+  @media (max-width: 860px) { .story-demo { grid-template-columns: 1fr; } }
+  .book { background: #fffdf8; border-radius: 4px 14px 14px 4px; padding: 44px 40px; box-shadow: -10px 0 0 -4px #e8dccb, -18px 0 0 -8px #ddcfbb, 0 30px 60px #3b2a1e30; font-family: 'Newsreader', Georgia, serif; position: relative; }
+  .book .ch { font: 600 11px var(--sans); letter-spacing: .2em; text-transform: uppercase; color: var(--accent); }
+  .book h3 { font: 400 30px/1.15 var(--serif); margin: 10px 0 18px; }
+  .book p { font-family: var(--serif); font-weight: 300; font-size: 16.5px; line-height: 1.75; margin: 0 0 12px; color: #4a3729; }
+  .book p:first-of-type::first-letter { float: left; font-size: 54px; line-height: .85; padding: 6px 8px 0 0; color: var(--accent); font-weight: 400; }
+  .book .qr { display: flex; gap: 14px; align-items: center; border-top: 1px solid var(--line); padding-top: 16px; margin-top: 18px; font: 13px/1.4 var(--sans); color: var(--soft); }
+  .qr-box { width: 64px; height: 64px; flex: none; background:
+    conic-gradient(from 90deg at 30% 30%, #3b2a1e 25%, transparent 0) 0 0/16px 16px, #fff; border: 4px solid #fff; outline: 2px solid #3b2a1e; }
+  .ticks { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 14px; }
+  .ticks li { display: flex; gap: 12px; } .ticks li::before { content: '✓'; flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--sage-bg); color: var(--sage); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+
+  .care { background: var(--ink); color: #f3eadb; }
+  .care h2 { color: #fff; } .care .section-head p { color: #d6c6b2; }
+  .care-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .care-grid div { border: 1px solid #ffffff1f; border-radius: var(--radius); padding: 24px; }
+  .care-grid b { display: block; font: 400 20px var(--serif); color: #fff; margin-bottom: 8px; }
+  .care-grid p { margin: 0; color: #cdbba6; font-size: 15px; }
+  @media (max-width: 900px) { .care-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .care-grid { grid-template-columns: 1fr; } }
+
+  .pricing { display: grid; grid-template-columns: 1.15fr .85fr; gap: 22px; max-width: 900px; margin: 0 auto; }
+  @media (max-width: 760px) { .pricing { grid-template-columns: 1fr; } }
+  .price { padding: 36px; }
+  .price.main { border: 2px solid var(--accent); position: relative; }
+  .price.main .tag { position: absolute; top: -13px; left: 32px; background: var(--accent); color: #fff; font: 700 12px var(--sans); padding: 5px 12px; border-radius: 999px; letter-spacing: .05em; }
+  .price h3 { font-size: 24px; margin-bottom: 4px; }
+  .price .amount { font: 300 54px/1 var(--serif); margin: 18px 0 4px; }
+  .price .amount small { font: 500 16px var(--sans); color: var(--soft); }
+  .price ul { list-style: none; padding: 0; margin: 22px 0 28px; display: grid; gap: 10px; }
+  .price li::before { content: '✓  '; color: var(--sage); font-weight: 700; }
+
+  .gift { display: grid; grid-template-columns: auto 1fr auto; gap: 28px; align-items: center; padding: 36px 40px; background: linear-gradient(120deg, #fff6ec, #f7e3d3); }
+  .gift .big { font-size: 56px; }
+  .gift h3 { font-size: 28px; margin-bottom: 6px; }
+  @media (max-width: 760px) { .gift { grid-template-columns: 1fr; text-align: center; } }
+
+  .faq { max-width: 760px; margin: 0 auto; }
+  .faq details { border-bottom: 1px solid var(--line); padding: 20px 4px; }
+  .faq summary { cursor: pointer; font: 400 20px var(--serif); list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+  .faq summary::after { content: '+'; color: var(--accent); font-size: 26px; line-height: 1; transition: transform .2s; }
+  .faq details[open] summary::after { transform: rotate(45deg); }
+  .faq details p { color: var(--ink-2); margin: 12px 0 0; }
+
+  .waitlist { max-width: 620px; margin: 0 auto; padding: 44px; text-align: center; }
+  .waitlist form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; text-align: left; }
+  .waitlist form .full { grid-column: 1 / -1; }
+  @media (max-width: 560px) { .waitlist form { grid-template-columns: 1fr; } }
+
+  footer { padding: 48px 0; border-top: 1px solid var(--line); color: var(--soft); font-size: 14px; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .reveal { opacity: 0; transform: translateY(18px); transition: .7s cubic-bezier(.2,.7,.2,1); }
+  .reveal.in { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+
+<nav class="top"><div class="wrap">
+  <a class="logo" href="/"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="11" r="8" fill="#5f7356"/><circle cx="10.5" cy="13" r="5.5" fill="#6f8566"/><circle cx="21.5" cy="13" r="5.5" fill="#6f8566"/><path d="M16 14v9M16 23c-2 2-5 3-7 3M16 23c2 2 5 3 7 3M16 23v5" stroke="#b4552d" stroke-width="2" stroke-linecap="round"/></svg>Raízes</a>
+  <div class="links">
+    <a class="hide-m" href="#como">Como funciona</a>
+    <a class="hide-m" href="#livro">O livro</a>
+    <a class="hide-m" href="#precos">Preços</a>
+    <a href="/app">Entrar</a>
+    <a class="btn small" href="/app#/cadastro">Começar grátis</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <div>
+    <div class="eyebrow">Memórias de família · pelo WhatsApp</div>
+    <h1>A voz de quem você ama, <em>guardada para sempre.</em></h1>
+    <p class="lead">Toda semana, o Raízes conversa por áudio com seus pais e avós no WhatsApp que eles já usam. Cada história vira um capítulo de livro, com um QR code que toca a voz de quem contou.</p>
+    <div class="ctas">
+      <a class="btn" href="/app#/cadastro">Começar com 2 conversas grátis</a>
+      <a class="btn ghost" href="#como">Ver como funciona</a>
+    </div>
+    <div class="note">Nada para o idoso instalar · Cancele quando quiser</div>
+  </div>
+  <div class="phone" aria-hidden="true"><div class="screen">
+    <div class="wa-head"><div class="av">🌳</div><div><b>Raízes</b><small>online</small></div></div>
+    <div class="chat">
+      <div class="b in"><div class="voice"><div class="play"></div><div class="wave" data-wave></div><span class="dur">0:14</span></div><time>10:02</time></div>
+      <div class="b in">Bom dia, Dona Maria! Hoje eu queria ouvir: <b>como a senhora conheceu o Seu Antônio?</b> 💛<time>10:02</time></div>
+      <div class="b out"><div class="voice"><div class="face">👵</div><div class="play"></div><div class="wave" data-wave></div><span class="dur">3:47</span></div><time>10:31 ✓✓</time></div>
+      <div class="b in">Que lindo, um baile na festa de São João! 😍 E o que ele disse quando chamou a senhora pra dançar?<time>10:32</time></div>
+      <div class="b out"><div class="voice"><div class="face">👵</div><div class="play"></div><div class="wave" data-wave></div><span class="dur">2:15</span></div><time>10:40 ✓✓</time></div>
+      <div class="b in">Guardei com todo carinho. Sua neta Ana vai amar! 🥰<time>10:41</time></div>
+    </div>
+  </div></div>
+</div></header>
+
+<div class="strip"><div class="wrap"><span>Sem aplicativo para o idoso</span><span>Conversa por áudio</span><span>Livro com a voz original</span><span>Toda a família acompanha</span></div></div>
+
+<section class="block" id="como"><div class="wrap">
+  <div class="section-head reveal"><div class="eyebrow">Como funciona</div><h2>Você cadastra. A gente <em>conversa</em>. A família guarda.</h2>
+    <p>Ninguém precisa aprender nada novo. Seu avô só precisa fazer o que já faz: mandar áudio no WhatsApp.</p></div>
+  <div class="steps">
+    <div class="step card reveal"><h3>Cadastre quem você ama</h3><p>Diga como chamar ("Vó Cida", "Seu Zé"), o melhor dia da semana e o que evitar. Ele recebe um convite carinhoso e aceita respondendo SIM.</p></div>
+    <div class="step card reveal"><h3>Uma pergunta por semana</h3><p>Chega em áudio, com voz calma: infância, o primeiro amor, o primeiro emprego. Ele responde falando, e o Raízes puxa os detalhes com perguntas de acompanhamento, como uma boa neta faria.</p></div>
+    <div class="step card reveal"><h3>Vira livro, com voz</h3><p>Cada conversa vira um capítulo escrito nas palavras dele. Você recebe no WhatsApp a cada história nova. No fim, um livro de capa dura em que cada página toca o áudio original.</p></div>
+  </div>
+</div></section>
+
+<section class="block" id="livro" style="background: var(--paper-2)"><div class="wrap story-demo">
+  <div class="book reveal">
+    <div class="ch">Capítulo 4 · Amor</div>
+    <h3>O baile de São João de 1961</h3>
+    <p>Eu tinha dezessete anos e um vestido de chita que minha mãe costurou na véspera. O Antônio estava encostado no mastro da bandeira, todo engomado, fingindo que não me via.</p>
+    <p>Quando a sanfona começou o xote, ele atravessou o terreiro inteiro e falou: "a moça me dá a honra?". Eu disse que só se ele soubesse dançar. Não sabia. Pisou no meu pé a noite toda.</p>
+    <div class="qr"><div class="qr-box"></div><span>Aponte a câmera do celular<br>e ouça esta história na voz da Vó Maria</span></div>
+  </div>
+  <div class="reveal">
+    <div class="eyebrow">O que você recebe</div>
+    <h2>Não é só um livro. É <em>a voz dela</em> em cada página.</h2>
+    <p class="muted" style="font-size:18px">Daqui a trinta anos, seus filhos vão poder ouvir a bisavó contando como conheceu o bisavô. Com o sotaque, as risadas e as pausas dela.</p>
+    <ul class="ticks">
+      <li>Painel da família com todas as histórias, transcrições e áudios</li>
+      <li>Histórias organizadas em capítulos da vida, editáveis por você</li>
+      <li>Livro digital pronto para imprimir ou salvar em PDF</li>
+      <li>Livro impresso de capa dura com QR codes em cada capítulo</li>
+    </ul>
+  </div>
+</div></section>
+
+<section class="block care"><div class="wrap">
+  <div class="section-head reveal"><div class="eyebrow" style="color:var(--accent-2)">Feito com cuidado</div><h2>Respeito vem antes de tudo</h2>
+    <p>Do outro lado está alguém que a sua família ama. Cada detalhe foi pensado para essa pessoa.</p></div>
+  <div class="care-grid">
+    <div class="reveal"><b>Só com consentimento</b><p>Nada começa sem a pessoa responder SIM. Para parar, basta mandar PARAR, a qualquer momento.</p></div>
+    <div class="reveal"><b>Delicadeza nos temas</b><p>Você avisa o que evitar (um luto recente, por exemplo) e a IA desvia dos temas sensíveis.</p></div>
+    <div class="reveal"><b>Sem pressa</b><p>Uma pergunta por semana e um único lembrete gentil. Nada de insistência.</p></div>
+    <div class="reveal"><b>Privado por padrão</b><p>As histórias são da sua família. Só quem tem o link ouve, e você pode apagar tudo quando quiser.</p></div>
+  </div>
+</div></section>
+
+<section class="block" id="precos"><div class="wrap">
+  <div class="section-head reveal"><div class="eyebrow">Preços</div><h2>Menos de <em>R$ 6 por semana</em> para guardar uma vida inteira</h2>
+    <p>Comece com <b data-trial>2</b> conversas grátis. Se a família se emocionar (e ela vai), assine.</p></div>
+  <div class="pricing">
+    <div class="price card main reveal"><div class="tag">MAIS ESCOLHIDO</div>
+      <h3>Plano anual</h3><div class="muted">Para uma pessoa querida</div>
+      <div class="amount">R$ <span data-price="plan">299</span><small> /ano</small></div>
+      <div class="muted small">ou 12× no cartão pelo Mercado Pago</div>
+      <ul><li>52 conversas semanais por áudio</li><li>Perguntas de acompanhamento com IA</li><li>Histórias escritas na voz da pessoa</li><li>Áudios originais guardados</li><li>Livro digital ilimitado</li><li>Aviso no seu WhatsApp a cada história</li></ul>
+      <a class="btn" style="width:100%" href="/app#/cadastro">Começar grátis</a>
+    </div>
+    <div class="price card reveal">
+      <h3>Livro impresso</h3><div class="muted">Capa dura, papel pólen</div>
+      <div class="amount">R$ <span data-price="book">199</span><small> /livro</small></div>
+      <div class="muted small">Peça cópias para tios e primos</div>
+      <ul><li>Todas as histórias do ano</li><li>QR code com a voz em cada capítulo</li><li>Sumário por capítulos da vida</li><li>Entrega em todo o Brasil</li></ul>
+      <a class="btn ghost" style="width:100%" href="/app#/cadastro">Quero o livro</a>
+    </div>
+  </div>
+</div></section>
+
+<section class="wrap" style="padding-bottom: 96px"><div class="gift card reveal">
+  <div class="big">🎁</div>
+  <div><h3>O presente que ninguém esquece</h3><p class="muted" style="margin:0">Dia das Mães, Natal, os 80 anos do vô. Dê o Raízes de presente e entregue o livro na próxima reunião de família.</p></div>
+  <a class="btn" href="/app#/cadastro">Dar de presente</a>
+</div></section>
+
+<section class="block" style="background: var(--paper-2)"><div class="wrap">
+  <div class="section-head reveal"><div class="eyebrow">Perguntas frequentes</div><h2>Ficou alguma dúvida?</h2></div>
+  <div class="faq">
+    <details><summary>Meu avô não sabe usar muita tecnologia. Funciona?</summary><p>Foi feito exatamente para ele. Se ele sabe ouvir e mandar áudio no WhatsApp, já sabe usar o Raízes. Para quem não usa WhatsApp, há um link com um botão grande de "gravar" que funciona em qualquer celular.</p></details>
+    <details><summary>E se ele ligar em vez de mandar áudio?</summary><p>O Raízes recusa a ligação com educação e responde na hora pedindo um áudio. Na segunda vez ele já pega o jeito.</p></details>
+    <details><summary>A história escrita é inventada pela IA?</summary><p>Não. A IA só organiza o que foi dito, em primeira pessoa, mantendo as expressões e os fatos. Você pode editar qualquer palavra, e o áudio original fica sempre guardado.</p></details>
+    <details><summary>Quem tem acesso às histórias?</summary><p>Só você e quem você compartilhar o link. Os QR codes do livro levam a páginas privadas que não aparecem em buscadores.</p></details>
+    <details><summary>Posso cadastrar mais de uma pessoa?</summary><p>Pode. Cada pessoa tem o seu próprio plano e o seu próprio livro. Muitas famílias começam pelos quatro avós.</p></details>
+    <details><summary>E se ele não quiser mais participar?</summary><p>É só mandar PARAR. As mensagens param na hora, e tudo que já foi gravado continua com você.</p></details>
+  </div>
+</div></section>
+
+<section class="block" id="lista"><div class="wrap">
+  <div class="waitlist card reveal">
+    <div class="eyebrow">Novidades e livro impresso</div>
+    <h2 style="font-size:34px">Entre na lista da família Raízes</h2>
+    <p class="muted">Avisamos quando abrirem novas turmas do livro impresso e de presentes de fim de ano.</p>
+    <form id="wl">
+      <input name="name" placeholder="Seu nome">
+      <input name="phone" placeholder="WhatsApp (opcional)">
+      <input class="full" name="email" type="email" placeholder="Seu melhor e-mail" required>
+      <select class="full" name="interest"><option value="">Para quem seria?</option><option>Minha avó / meu avô</option><option>Minha mãe / meu pai</option><option>Para dar de presente</option><option>Para mim mesmo(a)</option></select>
+      <button class="btn full" type="submit">Quero participar</button>
+    </form>
+  </div>
+</div></section>
+
+<footer><div class="wrap"><div>🌳 Raízes. Histórias de família na voz de quem viveu.</div><div><a href="/app">Entrar</a> · <a href="#precos">Preços</a> · <a href="#lista">Contato</a></div></div></footer>
+
+<div class="toast" id="toast"></div>
+<script>
+  // ondas de áudio aleatórias
+  document.querySelectorAll('[data-wave]').forEach(w => { for (let i = 0; i < 28; i++) { const b = document.createElement('i'); b.style.height = (20 + Math.random() * 80) + '%'; w.appendChild(b); } });
+  // nav com borda ao rolar
+  const nav = document.querySelector('nav.top'); addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 10));
+  // revelar ao rolar
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+  // preços dinâmicos
+  fetch('/api/config').then(r => r.json()).then(c => {
+    const fmt = n => n.toLocaleString('pt-BR');
+    document.querySelectorAll('[data-price]').forEach(el => el.textContent = fmt(c.prices[el.dataset.price]));
+    document.querySelectorAll('[data-trial]').forEach(el => el.textContent = c.trialConversations);
+  }).catch(() => {});
+  // lista de espera
+  const toast = (m, err) => { const t = document.getElementById('toast'); t.textContent = m; t.className = 'toast show' + (err ? ' err' : ''); setTimeout(() => t.className = 'toast', 3500); };
+  document.getElementById('wl').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.target));
+    const r = await fetch('/api/waitlist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    const j = await r.json();
+    if (r.ok) { e.target.reset(); toast('Pronto! Você está na lista. 💛'); } else toast(j.error || 'Erro ao enviar', true);
+  });
+</script>
+</body>
+</html>
