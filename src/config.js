@@ -48,6 +48,14 @@ export const config = {
     transcribeModel: env('OPENAI_TRANSCRIBE_MODEL', 'gpt-4o-transcribe'),
     ttsModel: env('OPENAI_TTS_MODEL', 'gpt-4o-mini-tts'),
     ttsVoice: env('OPENAI_TTS_VOICE', 'coral'),
+    elevenKey: env('ELEVENLABS_API_KEY'),
+    elevenBase: env('ELEVENLABS_BASE_URL', 'https://api.elevenlabs.io').replace(/\/$/, ''),
+    elevenVoiceId: env('ELEVENLABS_VOICE_ID'),
+    elevenTtsModel: env('ELEVENLABS_TTS_MODEL', 'eleven_multilingual_v2'),
+    elevenSttModel: env('ELEVENLABS_STT_MODEL', 'scribe_v2'),
+    // Provedor escolhido: ElevenLabs se houver chave, senão OpenAI
+    get sttProvider() { return this.elevenKey ? 'elevenlabs' : this.openaiKey ? 'openai' : null; },
+    get ttsProvider() { return this.elevenKey && this.elevenVoiceId ? 'elevenlabs' : this.openaiKey ? 'openai' : null; },
   },
 
   conversation: {
@@ -71,7 +79,7 @@ fs.mkdirSync(audioDir, { recursive: true });
 export const features = {
   get whatsapp() { return Boolean(config.waha.url && config.waha.apiKey); },
   get claude() { return Boolean(config.ai.anthropicKey); },
-  get transcription() { return Boolean(config.ai.openaiKey); },
-  get tts() { return Boolean(config.ai.openaiKey); },
+  get transcription() { return Boolean(config.ai.sttProvider); },
+  get tts() { return Boolean(config.ai.ttsProvider); },
   get payments() { return Boolean(config.payments.mpAccessToken); },
 };

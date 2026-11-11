@@ -14,7 +14,7 @@ Histórias de família guardadas na voz de quem viveu. Toda semana o Raízes man
 | Webhook WhatsApp | `POST /webhooks/waha/:secret` | Recebe mensagens, áudios e ligações do WAHA |
 | Webhook pagamento | `POST /webhooks/mercadopago` | Ativa o plano anual quando o pagamento é aprovado |
 
-**Stack:** Node.js 20.6+ (Express 5) · MySQL/MariaDB (ou SQLite para desenvolvimento) · WAHA · Claude · OpenAI (transcrição e voz) · Mercado Pago. Sem build de frontend: HTML/CSS/JS puros em `public/`.
+**Stack:** Node.js 20.6+ (Express 5) · MySQL/MariaDB (ou SQLite para desenvolvimento) · WAHA · Claude · ElevenLabs ou OpenAI (transcrição e voz) · Mercado Pago. Sem build de frontend: HTML/CSS/JS puros em `public/`.
 
 ## Como a conversa funciona
 
@@ -56,7 +56,7 @@ Os **áudios ficam em `DATA_DIR/audio`**, não no banco. Faça backup dessa past
 ### IA
 
 - `ANTHROPIC_API_KEY`: conversa e escrita das histórias. Sem ela, o app usa perguntas genéricas e a história fica com a transcrição bruta.
-- `OPENAI_API_KEY`: transcrição dos áudios e voz das perguntas. Sem ela, os áudios são guardados mas não transcritos, e as perguntas saem só em texto.
+- **Transcrição e voz:** use **ElevenLabs** (`ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID`, com transcrição Scribe e a sua voz nas perguntas) **ou** OpenAI (`OPENAI_API_KEY`). Se as duas estiverem configuradas, a ElevenLabs tem prioridade. Sem nenhuma, os áudios são guardados mas não transcritos, e as perguntas saem só em texto. O log de inicialização mostra o provedor ativo (`Transcrição: elevenlabs · Voz: elevenlabs`).
 
 ### Pagamentos
 

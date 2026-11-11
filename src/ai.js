@@ -121,38 +121,80 @@ export function parseIntent(text = '') {
   return null;
 }
 
-// ---------- OpenAI: transcrição e voz ----------
+// ---------- Transcrição e voz: ElevenLabs (preferida) ou OpenAI ----------
+import { spawn } from 'node:child_process';
+
+const extOf = (m) => m.includes('webm') ? 'webm' : (m.includes('mp4') || m.includes('m4a')) ? 'm4a'
+  : (m.includes('mpeg') || m.includes('mp3')) ? 'mp3' : m.includes('wav') ? 'wav' : 'ogg';
 
 export async function transcribe(buffer, mimetype = 'audio/ogg') {
-  if (!features.transcription) return null;
-  const ext = mimetype.includes('webm') ? 'webm' : mimetype.includes('mp4') || mimetype.includes('m4a') ? 'm4a'
-    : mimetype.includes('mpeg') || mimetype.includes('mp3') ? 'mp3' : mimetype.includes('wav') ? 'wav' : 'ogg';
+  const provider = config.ai.sttProvider;
+  if (!provider) return null;
   const form = new FormData();
-  form.append('file', new Blob([buffer], { type: mimetype.split(';')[0] }), `audio.${ext}`);
-  form.append('model', config.ai.transcribeModel);
-  form.append('language', 'pt');
-  form.append('prompt', 'Relato de memórias de uma pessoa idosa brasileira, com nomes de pessoas, cidades e expressões regionais.');
-  const res = await fetch(`${config.ai.openaiBase}/v1/audio/transcriptions`, {
-    method: 'POST', headers: { Authorization: `Bearer ${config.ai.openaiKey}` }, body: form,
-  });
-  if (!res.ok) throw new Error(`Transcrição ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  form.append('file', new Blob([buffer], { type: mimetype.split(';')[0] }), `audio.${extOf(mimetype)}`);
+  let url, headers;
+  if (provider === 'elevenlabs') {
+    form.append('model_id', config.ai.elevenSttModel);
+    form.append('language_code', 'por');
+    form.append('tag_audio_events', 'false');
+    url = `${config.ai.elevenBase}/v1/speech-to-text`;
+    headers = { 'xi-api-key': config.ai.elevenKey };
+  } else {
+    form.append('model', config.ai.transcribeModel);
+    form.append('language', 'pt');
+    form.append('prompt', 'Relato de memórias de uma pessoa idosa brasileira, com nomes de pessoas, cidades e expressões regionais.');
+    url = `${config.ai.openaiBase}/v1/audio/transcriptions`;
+    headers = { Authorization: `Bearer ${config.ai.openaiKey}` };
+  }
+  const res = await fetch(url, { method: 'POST', headers, body: form });
+  if (!res.ok) throw new Error(`Transcrição (${provider}) ${res.status}: ${(await res.text()).slice(0, 300)}`);
   return (await res.json()).text?.trim() || '';
+}
+
+const isOgg = (b) => b.length > 4 && b.subarray(0, 4).toString('latin1') === 'OggS';
+
+/** Converte qualquer áudio para OGG/Opus com ffmpeg (se o provedor não entregar em OGG). */
+function toOggOpus(buffer) {
+  return new Promise((resolve, reject) => {
+    const ff = spawn('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-i', 'pipe:0', '-ac', '1', '-c:a', 'libopus', '-b:a', '48k', '-f', 'ogg', 'pipe:1']);
+    const out = [];
+    ff.stdout.on('data', (d) => out.push(d));
+    ff.on('error', reject);
+    ff.on('close', (code) => code === 0 ? resolve(Buffer.concat(out)) : reject(new Error('ffmpeg falhou')));
+    ff.stdin.on('error', () => {});
+    ff.stdin.end(buffer);
+  });
 }
 
 /** Gera áudio OGG/Opus (formato de mensagem de voz do WhatsApp). */
 export async function tts(text) {
-  if (!features.tts) return null;
-  const res = await fetch(`${config.ai.openaiBase}/v1/audio/speech`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${config.ai.openaiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: config.ai.ttsModel,
-      voice: config.ai.ttsVoice,
-      input: text,
-      response_format: 'opus',
-      instructions: 'Português do Brasil. Voz calorosa, calma e sorridente, falando devagar e com clareza, como uma neta conversando com carinho com a avó.',
-    }),
-  });
-  if (!res.ok) throw new Error(`TTS ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  return Buffer.from(await res.arrayBuffer());
+  const provider = config.ai.ttsProvider;
+  if (!provider) return null;
+  let res;
+  if (provider === 'elevenlabs') {
+    res = await fetch(`${config.ai.elevenBase}/v1/text-to-speech/${encodeURIComponent(config.ai.elevenVoiceId)}?output_format=opus_48000_64`, {
+      method: 'POST',
+      headers: { 'xi-api-key': config.ai.elevenKey, 'Content-Type': 'application/json', Accept: 'audio/ogg' },
+      body: JSON.stringify({
+        text,
+        model_id: config.ai.elevenTtsModel,
+        language_code: 'pt',
+        voice_settings: { stability: 0.55, similarity_boost: 0.8, style: 0.15, use_speaker_boost: true, speed: 0.92 },
+      }),
+    });
+  } else {
+    res = await fetch(`${config.ai.openaiBase}/v1/audio/speech`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${config.ai.openaiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: config.ai.ttsModel, voice: config.ai.ttsVoice, input: text, response_format: 'opus',
+        instructions: 'Português do Brasil. Voz calorosa, calma e sorridente, falando devagar e com clareza, como uma neta conversando com carinho com a avó.',
+      }),
+    });
+  }
+  if (!res.ok) throw new Error(`Voz (${provider}) ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (isOgg(buf)) return buf;
+  try { return await toOggOpus(buf); }
+  catch (e) { throw new Error(`Áudio não veio em OGG e a conversão falhou (instale ffmpeg): ${e.message}`); }
 }

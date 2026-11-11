@@ -69,6 +69,7 @@ backend.use(onError);
 backend.listen(config.port, () => {
   console.log(`🌳 Raízes rodando em ${config.publicUrl} (backend na porta ${config.port})`);
   console.log('   Recursos:', Object.keys(features).map(k => `${k}=${features[k] ? 'ok' : '—'}`).join('  '));
+  console.log(`   Transcrição: ${config.ai.sttProvider || '—'} · Voz: ${config.ai.ttsProvider || '—'}`);
   console.log(`   Banco: ${db.kind === 'mysql' ? `MySQL ${config.db.host}/${config.db.name}` : 'SQLite (DATA_DIR)'}`);
   if (config.sessionSecret === 'troque-este-segredo' || config.waha.webhookSecret.startsWith('troque')) {
     console.warn('⚠️  Defina SESSION_SECRET e WAHA_WEBHOOK_SECRET no .env antes de publicar.');
