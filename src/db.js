@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS stories (id INTEGER PRIMARY KEY, elder_id INTEGER NOT
   conversation_id INTEGER REFERENCES conversations(id) ON DELETE SET NULL, chapter TEXT NOT NULL, title TEXT NOT NULL, body TEXT NOT NULL,
   transcript TEXT, public_token TEXT NOT NULL UNIQUE, hidden INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')));
+CREATE TABLE IF NOT EXISTS settings (k TEXT PRIMARY KEY, v TEXT);
 CREATE TABLE IF NOT EXISTS waitlist (id INTEGER PRIMARY KEY, name TEXT, email TEXT NOT NULL, phone TEXT, interest TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')));
 CREATE TABLE IF NOT EXISTS payments (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   product TEXT NOT NULL, elder_id INTEGER, amount REAL NOT NULL, status TEXT NOT NULL DEFAULT 'pending', mp_preference_id TEXT, mp_payment_id TEXT,
@@ -62,11 +63,17 @@ const MYSQL_SCHEMA = [
     title VARCHAR(255) NOT NULL, body MEDIUMTEXT NOT NULL, transcript MEDIUMTEXT, public_token VARCHAR(64) NOT NULL UNIQUE, hidden TINYINT NOT NULL DEFAULT 0,
     created_at ${NOW}, updated_at ${NOW},
     FOREIGN KEY (elder_id) REFERENCES elders(id) ON DELETE CASCADE, FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE SET NULL) ${T}`,
+  `CREATE TABLE IF NOT EXISTS settings (k VARCHAR(64) PRIMARY KEY, v TEXT) ${T}`,
   `CREATE TABLE IF NOT EXISTS waitlist (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(200), email VARCHAR(190) NOT NULL, phone VARCHAR(32),
     interest VARCHAR(120), created_at ${NOW}) ${T}`,
   `CREATE TABLE IF NOT EXISTS payments (id INT AUTO_INCREMENT PRIMARY KEY, user_id INT NOT NULL, product VARCHAR(16) NOT NULL, elder_id INT NULL,
     amount DECIMAL(10,2) NOT NULL, status VARCHAR(24) NOT NULL DEFAULT 'pending', mp_preference_id VARCHAR(120), mp_payment_id VARCHAR(64), shipping TEXT,
     created_at ${NOW}, updated_at ${NOW}, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE) ${T}`,
+];
+
+// Colunas novas em bancos já existentes (ignoradas se já existirem)
+const MIGRATIONS = [
+  { mysql: 'ALTER TABLE elders ADD COLUMN voice_id VARCHAR(64) NULL', sqlite: 'ALTER TABLE elders ADD COLUMN voice_id TEXT' },
 ];
 
 // ---------- adaptadores ----------
@@ -87,6 +94,7 @@ async function createMysql() {
   });
   pool.on('connection', (conn) => conn.query("SET time_zone = '+00:00'"));
   for (const s of MYSQL_SCHEMA) await pool.query(s);
+  for (const m of MIGRATIONS) await pool.query(m.mysql).catch(e => { if (e.code !== 'ER_DUP_FIELDNAME') throw e; });
   return {
     kind: 'mysql',
     async all(sql, params = []) { const [rows] = await pool.execute(sql, params.map(nul)); return rows; },
@@ -108,6 +116,7 @@ async function createSqlite() {
   s.pragma('journal_mode = WAL');
   s.pragma('foreign_keys = ON');
   s.exec(SQLITE_SCHEMA);
+  for (const m of MIGRATIONS) { try { s.exec(m.sqlite); } catch (e) { if (!/duplicate column/i.test(e.message)) throw e; } }
   return {
     kind: 'sqlite',
     async all(sql, params = []) { return s.prepare(sql).all(...params.map(nul)); },
@@ -128,3 +137,17 @@ export const q = {
   conversation: (id) => db.get('SELECT * FROM conversations WHERE id = ?', [id]),
   user: (id) => db.get('SELECT * FROM users WHERE id = ?', [id]),
 };
+
+// ---------- configurações (chave/valor) ----------
+const settingsCache = new Map();
+export async function getSetting(k) {
+  if (settingsCache.has(k)) return settingsCache.get(k);
+  const row = await db.get('SELECT v FROM settings WHERE k = ?', [k]);
+  settingsCache.set(k, row?.v ?? null);
+  return row?.v ?? null;
+}
+export async function setSetting(k, v) {
+  await db.run('DELETE FROM settings WHERE k = ?', [k]);
+  if (v !== null && v !== undefined && v !== '') await db.run('INSERT INTO settings (k, v) VALUES (?, ?)', [k, String(v)]);
+  settingsCache.set(k, v || null);
+}

@@ -55,7 +55,7 @@ export const config = {
     elevenSttModel: env('ELEVENLABS_STT_MODEL', 'scribe_v2'),
     // Provedor escolhido: ElevenLabs se houver chave, senão OpenAI
     get sttProvider() { return this.elevenKey ? 'elevenlabs' : this.openaiKey ? 'openai' : null; },
-    get ttsProvider() { return this.elevenKey && this.elevenVoiceId ? 'elevenlabs' : this.openaiKey ? 'openai' : null; },
+    get ttsProvider() { return this.elevenKey ? 'elevenlabs' : this.openaiKey ? 'openai' : null; },
   },
 
   conversation: {

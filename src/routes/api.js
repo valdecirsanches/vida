@@ -1,7 +1,8 @@
 import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
-import { db, q, token, now } from '../db.js';
+import { db, q, token, now, getSetting, setSetting } from '../db.js';
+import { listVoices, tts } from '../ai.js';
 import { config, features, audioDir } from '../config.js';
 import { requireUser, createSession, destroySession, currentUser, hash, verify } from '../auth.js';
 import * as conv from '../conversation.js';
@@ -85,7 +86,7 @@ const elderView = async (e) => {
   return { ...e, ...stats, link: `${config.publicUrl}/g/${e.token}` };
 };
 
-const ELDER_FIELDS = ['name', 'call_name', 'pronoun', 'relation', 'requester_name', 'phone', 'birth_year', 'city', 'notes', 'channel', 'voice', 'weekday', 'hour'];
+const ELDER_FIELDS = ['voice_id', 'name', 'call_name', 'pronoun', 'relation', 'requester_name', 'phone', 'birth_year', 'city', 'notes', 'channel', 'voice', 'weekday', 'hour'];
 
 function cleanElder(body, partial = false) {
   const o = {};
@@ -208,6 +209,36 @@ export function sendAudio(res, m) {
   res.type({ ogg: 'audio/ogg', webm: 'audio/webm', m4a: 'audio/mp4', mp3: 'audio/mpeg', wav: 'audio/wav' }[ext] || 'application/octet-stream');
   res.sendFile(file);
 }
+
+// ---------- vozes ----------
+const isAdmin = (u) => config.adminEmails.includes(u.email.toLowerCase());
+
+api.get('/voices', async (req, res) => {
+  if (config.ai.ttsProvider !== 'elevenlabs') return res.json({ provider: config.ai.ttsProvider, voices: [], current: null });
+  try {
+    const voices = await listVoices({ fresh: req.query.fresh === '1' });
+    res.json({ provider: 'elevenlabs', voices, current: (await getSetting('eleven_voice_id')) || config.ai.elevenVoiceId || null, canSetDefault: isAdmin(req.user) });
+  } catch (e) { res.status(502).json({ error: e.message }); }
+});
+
+const previewCache = new Map();
+api.post('/voices/preview', async (req, res) => {
+  const { voiceId, name } = req.body || {};
+  const text = `Bom dia, ${String(name || 'Dona Maria').slice(0, 40)}! Hoje eu queria ouvir uma história sua. Como era a casa onde a senhora cresceu?`;
+  const key = `${voiceId}|${text}`;
+  try {
+    let audio = previewCache.get(key);
+    if (!audio) { audio = await tts(text, { voiceId: voiceId || null }); previewCache.set(key, audio); if (previewCache.size > 100) previewCache.clear(); }
+    if (!audio) return res.status(400).json({ error: 'Voz não configurada no servidor.' });
+    res.type('audio/ogg').send(audio);
+  } catch (e) { res.status(502).json({ error: e.message }); }
+});
+
+api.put('/voices/default', async (req, res) => {
+  if (!isAdmin(req.user)) return res.status(403).json({ error: 'Só o administrador escolhe a voz padrão.' });
+  await setSetting('eleven_voice_id', req.body?.voiceId || null);
+  res.json({ ok: true });
+});
 
 api.post('/checkout', async (req, res) => {
   const { product, elderId, shipping } = req.body || {};

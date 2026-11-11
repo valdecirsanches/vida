@@ -57,7 +57,7 @@ export async function say(elder, conv, text, { voice = true } = {}) {
   let audioPath = null;
   if (voice && elder.voice && features.tts) {
     try {
-      const ogg = await ai.tts(text);
+      const ogg = await ai.tts(text, { voiceId: elder.voice_id });
       if (ogg) audioPath = saveAudio(elder.id, ogg, 'ogg');
     } catch (e) { console.warn('[say] TTS falhou:', e.message); }
   }

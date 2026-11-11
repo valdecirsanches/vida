@@ -37,7 +37,7 @@ const initials = (n) => n.split(' ').map(x => x[0]).slice(0, 2).join('').toUpper
 
 function renderNav() {
   $('#nav').innerHTML = ME
-    ? `<a href="#/">Minha família</a><a href="#/plano">${ME.planActive ? 'Plano ativo ✓' : 'Assinar'}</a><a href="#/conta">Conta</a>${ME.admin ? '<a href="#/admin">Admin</a>' : ''}<a href="#" id="logout">Sair</a>`
+    ? `<a href="#/">Minha família</a><a href="#/plano">${ME.planActive ? 'Plano ativo ✓' : 'Assinar'}</a><a href="#/conta">Conta</a>${ME.admin ? '<a href="#/voz">Voz</a><a href="#/admin">Admin</a>' : ''}<a href="#" id="logout">Sair</a>`
     : `<a href="#/entrar">Entrar</a><a class="btn small" href="#/cadastro">Criar conta</a>`;
   const lo = $('#logout');
   if (lo) lo.onclick = async (e) => { e.preventDefault(); await api('/auth/logout', { method: 'POST' }); ME = null; location.hash = '#/entrar'; };
@@ -129,12 +129,17 @@ function elderForm(e = {}) {
       <div class="field"><label>Dia da pergunta semanal</label><select name="weekday">${WEEKDAYS.map((d, i) => `<option value="${i}" ${(e.weekday ?? 0) == i ? 'selected' : ''}>${d}</option>`).join('')}</select></div>
       <div class="field"><label>Horário</label><select name="hour">${Array.from({ length: 14 }, (_, i) => i + 8).map(h => `<option value="${h}" ${(e.hour ?? 10) == h ? 'selected' : ''}>${h}h</option>`).join('')}</select></div>
     </div>
-    <div class="field"><label style="display:flex;gap:10px;align-items:center;font-weight:500"><input type="checkbox" name="voice" style="width:auto" ${(e.voice ?? 1) ? 'checked' : ''}> Enviar as perguntas também em áudio (voz calma e carinhosa)</label></div>`;
+    <div class="field"><label style="display:flex;gap:10px;align-items:center;font-weight:500"><input type="checkbox" name="voice" style="width:auto" ${(e.voice ?? 1) ? 'checked' : ''}> Enviar as perguntas também em áudio (voz calma e carinhosa)</label></div>
+    <div class="field" id="voice-field" hidden><label>Voz das perguntas</label>
+      <div class="linkbox"><select name="voice_id" data-current="${v('voice_id')}"><option value="">Voz padrão</option></select>
+      <button type="button" class="btn small ghost" id="voice-play" style="white-space:nowrap">▶ Ouvir</button></div>
+      <div class="hint">Ex.: uma voz masculina para o vô, feminina para a vó.</div></div>`;
 }
 
 function newView() {
   view.innerHTML = `<div class="page-head"><div><div class="eyebrow">Nova pessoa</div><h1>Quem vai contar as histórias?</h1></div></div>
     <form class="form card" id="f">${elderForm()}<button class="btn">Salvar e continuar</button></form>`;
+  bindVoiceSelect();
   $('#f').onsubmit = async (ev) => {
     ev.preventDefault();
     try { const { elder } = await api('/elders', { body: formData(ev.target) }); toast('Cadastrado! 🌱'); location.hash = `#/p/${elder.id}`; }
@@ -210,6 +215,7 @@ async function elderView(id, tab = 'historias') {
   if (tab === 'ajustes') {
     box.innerHTML = `<form class="form card" id="f">${elderForm(e)}
       <div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap"><button class="btn">Salvar</button><button type="button" class="btn danger" id="del">Excluir pessoa e todos os áudios</button></div></form>`;
+    bindVoiceSelect();
     $('#f').onsubmit = async (ev) => { ev.preventDefault(); try { await api(`/elders/${e.id}`, { method: 'PATCH', body: formData(ev.target) }); toast('Salvo!'); route(); } catch (err) { toast(err.message, true); } };
     $('#del').onclick = async () => {
       if (prompt(`Isso apaga TODAS as histórias e áudios de ${e.call_name}. Digite APAGAR para confirmar.`) !== 'APAGAR') return;
@@ -282,6 +288,94 @@ async function adminView() {
     <h2 style="margin-top:30px">Pagamentos</h2><div class="card" style="padding:16px;overflow:auto">${tbl(d.payments, ['created_at', 'user_id', 'product', 'amount', 'status', 'shipping'])}</div>`;
 }
 
+// ---------------- vozes ----------------
+
+let VOICES = null;
+async function loadVoices(fresh) {
+  if (!VOICES || fresh) VOICES = await api('/voices' + (fresh ? '?fresh=1' : ''));
+  return VOICES;
+}
+const PT_LABELS = { female: 'feminina', male: 'masculina', neutral: 'neutra', young: 'jovem', middle_aged: 'meia-idade', 'middle aged': 'meia-idade', old: 'madura',
+  brazilian: 'brasileiro', portuguese: 'português', american: 'americano', british: 'britânico', australian: 'australiano', spanish: 'espanhol' };
+const tr = (x) => x ? (PT_LABELS[String(x).toLowerCase()] || String(x).replaceAll('_', ' ')) : '';
+const voiceLabel = (v) => [tr(v.labels.gender), tr(v.labels.age), tr(v.labels.accent)].filter(Boolean).join(' · ');
+
+let playing = null;
+async function playVoice(voiceId, btn, name) {
+  if (playing) { playing.pause(); playing = null; }
+  const old = btn.textContent; btn.disabled = true; btn.textContent = 'Gerando…';
+  try {
+    const r = await fetch('/api/voices/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ voiceId, name }) });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Erro ao gerar amostra');
+    playing = new Audio(URL.createObjectURL(await r.blob()));
+    btn.textContent = '🔊 Tocando'; await playing.play();
+    playing.onended = () => { btn.textContent = old; };
+  } catch (err) { toast(err.message, true); btn.textContent = old; }
+  finally { btn.disabled = false; }
+}
+
+/** Preenche o seletor de voz do formulário da pessoa (se a ElevenLabs estiver ativa). */
+async function bindVoiceSelect(root = document) {
+  const field = $('#voice-field', root); if (!field) return;
+  try {
+    const d = await loadVoices();
+    if (d.provider !== 'elevenlabs' || !d.voices.length) return;
+    const sel = $('select[name=voice_id]', field);
+    const cur = sel.dataset.current;
+    const def = d.voices.find(v => v.voice_id === d.current);
+    sel.options[0].textContent = `Voz padrão${def ? ` (${def.name})` : ''}`;
+    for (const v of d.voices) sel.add(new Option(`${v.name}${voiceLabel(v) ? ' · ' + voiceLabel(v) : ''}${v.portuguese ? ' · PT' : ''}`, v.voice_id, false, v.voice_id === cur));
+    field.hidden = false;
+    $('#voice-play', field).onclick = (ev) => playVoice(sel.value || d.current, ev.target, $('input[name=call_name]', root)?.value);
+  } catch { /* sem vozes: campo fica oculto */ }
+}
+
+async function voicesView(fresh = false) {
+  view.innerHTML = '<div class="card empty"><p>Carregando vozes da ElevenLabs…</p></div>';
+  let d;
+  try { d = await loadVoices(fresh); } catch (err) { view.innerHTML = `<div class="card empty"><h3>Não consegui listar as vozes</h3><p>${esc(err.message)}</p><p class="small muted">Confira a ELEVENLABS_API_KEY no .env e se ela tem permissão de leitura de vozes.</p></div>`; return; }
+  if (d.provider !== 'elevenlabs') {
+    view.innerHTML = `<div class="card empty"><h3>ElevenLabs não configurada</h3><p>Coloque <code>ELEVENLABS_API_KEY</code> no .env do servidor e reinicie para escolher vozes aqui.</p></div>`; return;
+  }
+  const genders = [...new Set(d.voices.map(v => v.labels.gender).filter(Boolean))];
+  view.innerHTML = `<div class="page-head"><div><div class="eyebrow">Voz do Raízes</div><h1>Escolha quem faz as perguntas</h1>
+      <p class="muted" style="margin:6px 0 0">Ouça cada voz falando em português e escolha a padrão. Em cada pessoa, nos Ajustes, dá para usar outra voz.</p></div>
+      <button class="btn ghost small" id="refresh">↻ Atualizar lista</button></div>
+    <div class="card" style="padding:14px;margin-bottom:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <input id="vq" placeholder="Buscar pelo nome…" style="flex:1;min-width:180px">
+      <select id="vg" style="width:auto"><option value="">Todas</option>${genders.map(g => `<option value="${esc(g)}">${g === 'female' ? 'Femininas' : g === 'male' ? 'Masculinas' : esc(g)}</option>`).join('')}</select>
+      <label style="display:flex;gap:6px;align-items:center;margin:0;font-weight:500"><input type="checkbox" id="vpt" style="width:auto"> Só verificadas em português</label>
+    </div>
+    <div class="grid" id="vlist"></div>`;
+  const draw = () => {
+    const qv = $('#vq').value.toLowerCase(), g = $('#vg').value, pt = $('#vpt').checked;
+    const list = d.voices.filter(v => (!qv || v.name.toLowerCase().includes(qv)) && (!g || v.labels.gender === g) && (!pt || v.portuguese));
+    $('#vlist').innerHTML = list.map(v => `
+      <div class="card" style="padding:20px;${v.voice_id === d.current ? 'border:2px solid var(--accent)' : ''}">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:start"><h3 style="font-size:21px;margin:0">${esc(v.name)}</h3>
+          ${v.voice_id === d.current ? '<span class="pill ok">✓ Padrão</span>' : ''}</div>
+        <div class="small muted" style="margin:4px 0 10px">${esc(voiceLabel(v) || v.category || '')}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${v.portuguese ? '<span class="pill ok">Português</span>' : ''}${v.category ? `<span class="pill">${esc(v.category)}</span>` : ''}${v.labels.use_case ? `<span class="pill">${esc(v.labels.use_case)}</span>` : ''}</div>
+        ${v.description ? `<p class="small muted" style="margin:0 0 12px">${esc(v.description.slice(0, 140))}</p>` : ''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn small" data-pt="${v.voice_id}">▶ Ouvir em português</button>
+          ${v.preview_url ? `<button class="btn small ghost" data-orig="${esc(v.preview_url)}">Amostra original</button>` : ''}
+          ${d.canSetDefault && v.voice_id !== d.current ? `<button class="btn small ghost" data-use="${v.voice_id}">Usar como padrão</button>` : ''}
+        </div>
+        <div class="hint" style="margin-top:10px">ID: <code>${esc(v.voice_id)}</code></div>
+      </div>`).join('') || '<div class="card empty"><p>Nenhuma voz com esse filtro.</p></div>';
+    $('#vlist').querySelectorAll('[data-pt]').forEach(b => b.onclick = () => playVoice(b.dataset.pt, b));
+    $('#vlist').querySelectorAll('[data-orig]').forEach(b => b.onclick = () => { if (playing) playing.pause(); playing = new Audio(b.dataset.orig); playing.play(); });
+    $('#vlist').querySelectorAll('[data-use]').forEach(b => b.onclick = async () => {
+      await api('/voices/default', { method: 'PUT', body: { voiceId: b.dataset.use } });
+      d.current = b.dataset.use; VOICES = d; toast('Voz padrão atualizada! 🎙️'); draw();
+    });
+  };
+  ['vq', 'vg', 'vpt'].forEach(id => $('#' + id).oninput = draw);
+  $('#refresh').onclick = () => voicesView(true);
+  draw();
+}
+
 // ---------------- roteador ----------------
 
 async function route() {
@@ -297,6 +391,7 @@ async function route() {
     if (a === 'conta') return accountView();
     if (a === 'pagamento') { const r = await api('/me'); ME = r.user; renderNav(); return paymentView(b); }
     if (a === 'admin') return await adminView();
+    if (a === 'voz') return await voicesView();
     return await homeView();
   } catch (err) {
     if (err.status === 401) { ME = null; renderNav(); location.hash = '#/entrar'; return; }

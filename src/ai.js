@@ -123,6 +123,44 @@ export function parseIntent(text = '') {
 
 // ---------- Transcrição e voz: ElevenLabs (preferida) ou OpenAI ----------
 import { spawn } from 'node:child_process';
+import { getSetting } from './db.js';
+
+let voicesCache = { at: 0, list: [] };
+/** Lista as vozes da conta ElevenLabs (cache de 10 min). */
+export async function listVoices({ fresh = false } = {}) {
+  if (!config.ai.elevenKey) return [];
+  if (!fresh && Date.now() - voicesCache.at < 600_000 && voicesCache.list.length) return voicesCache.list;
+  const all = [];
+  let next = null;
+  for (let i = 0; i < 10; i++) {
+    const qs = new URLSearchParams({ page_size: '100', ...(next ? { next_page_token: next } : {}) });
+    const res = await fetch(`${config.ai.elevenBase}/v2/voices?${qs}`, { headers: { 'xi-api-key': config.ai.elevenKey } });
+    if (!res.ok) throw new Error(`ElevenLabs vozes ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    const j = await res.json();
+    all.push(...(j.voices || []));
+    if (!j.has_more || !j.next_page_token) break;
+    next = j.next_page_token;
+  }
+  voicesCache = {
+    at: Date.now(),
+    list: all.map(v => ({
+      voice_id: v.voice_id, name: v.name, category: v.category, description: v.description || '',
+      labels: v.labels || {}, preview_url: v.preview_url || null,
+      portuguese: (v.verified_languages || []).some(l => String(l.language || '').startsWith('pt')),
+    })),
+  };
+  return voicesCache.list;
+}
+
+/** Voz a usar: a da pessoa > padrão escolhido no painel > .env > primeira da conta. */
+export async function resolveVoice(voiceId) {
+  if (voiceId) return voiceId;
+  const chosen = await getSetting('eleven_voice_id');
+  if (chosen) return chosen;
+  if (config.ai.elevenVoiceId) return config.ai.elevenVoiceId;
+  const list = await listVoices();
+  return list.find(v => v.portuguese)?.voice_id || list[0]?.voice_id || null;
+}
 
 const extOf = (m) => m.includes('webm') ? 'webm' : (m.includes('mp4') || m.includes('m4a')) ? 'm4a'
   : (m.includes('mpeg') || m.includes('mp3')) ? 'mp3' : m.includes('wav') ? 'wav' : 'ogg';
@@ -167,12 +205,14 @@ function toOggOpus(buffer) {
 }
 
 /** Gera áudio OGG/Opus (formato de mensagem de voz do WhatsApp). */
-export async function tts(text) {
+export async function tts(text, { voiceId = null } = {}) {
   const provider = config.ai.ttsProvider;
   if (!provider) return null;
   let res;
   if (provider === 'elevenlabs') {
-    res = await fetch(`${config.ai.elevenBase}/v1/text-to-speech/${encodeURIComponent(config.ai.elevenVoiceId)}?output_format=opus_48000_64`, {
+    const voice = await resolveVoice(voiceId);
+    if (!voice) throw new Error('Nenhuma voz disponível na conta ElevenLabs');
+    res = await fetch(`${config.ai.elevenBase}/v1/text-to-speech/${encodeURIComponent(voice)}?output_format=opus_48000_64`, {
       method: 'POST',
       headers: { 'xi-api-key': config.ai.elevenKey, 'Content-Type': 'application/json', Accept: 'audio/ogg' },
       body: JSON.stringify({

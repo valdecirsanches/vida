@@ -56,7 +56,7 @@ Os **áudios ficam em `DATA_DIR/audio`**, não no banco. Faça backup dessa past
 ### IA
 
 - `ANTHROPIC_API_KEY`: conversa e escrita das histórias. Sem ela, o app usa perguntas genéricas e a história fica com a transcrição bruta.
-- **Transcrição e voz:** use **ElevenLabs** (`ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID`, com transcrição Scribe e a sua voz nas perguntas) **ou** OpenAI (`OPENAI_API_KEY`). Se as duas estiverem configuradas, a ElevenLabs tem prioridade. Sem nenhuma, os áudios são guardados mas não transcritos, e as perguntas saem só em texto. O log de inicialização mostra o provedor ativo (`Transcrição: elevenlabs · Voz: elevenlabs`).
+- **Transcrição e voz:** use **ElevenLabs** (`ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID`, com transcrição Scribe e a sua voz nas perguntas) **ou** OpenAI (`OPENAI_API_KEY`). Se as duas estiverem configuradas, a ElevenLabs tem prioridade. Sem nenhuma, os áudios são guardados mas não transcritos, e as perguntas saem só em texto. O log de inicialização mostra o provedor ativo (`Transcrição: elevenlabs · Voz: elevenlabs`). A **voz** é escolhida no painel, em **Voz** (só admin): o painel lista as vozes da sua conta, toca uma amostra em português e define a voz padrão. Nos Ajustes de cada pessoa dá para usar outra voz. `ELEVENLABS_VOICE_ID` no `.env` é opcional.
 
 ### Pagamentos
 
