@@ -101,7 +101,9 @@ async function createMysql() {
 const nul = (v) => v === undefined ? null : typeof v === 'boolean' ? (v ? 1 : 0) : v;
 
 async function createSqlite() {
-  const Database = (await import('better-sqlite3')).default;
+  let Database;
+  try { Database = (await import('better-sqlite3')).default; }
+  catch { throw new Error('SQLite indisponível (better-sqlite3 não instalado). Configure DB_HOST para usar MySQL.'); }
   const s = new Database(path.join(config.dataDir, 'raizes.db'));
   s.pragma('journal_mode = WAL');
   s.pragma('foreign_keys = ON');

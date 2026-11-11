@@ -32,7 +32,7 @@ Histórias de família guardadas na voz de quem viveu. Toda semana o Raízes man
 ```bash
 cp .env.example .env      # preencha as chaves
 npm install
-npm start                 # http://localhost:3000
+npm start                 # frontend http://localhost:5188 · backend http://localhost:5187
 ```
 
 Na primeira execução o app cria o banco `DB_NAME` (se `DB_CREATE_DATABASE=true`) e todas as tabelas.
@@ -68,7 +68,7 @@ Com `MP_ACCESS_TOKEN`, os botões de assinatura e livro abrem o Checkout Pro do 
 docker compose up -d --build
 ```
 
-Coloque atrás de um proxy HTTPS (Nginx, Caddy, Traefik). O webhook do WAHA e os QR codes dependem de `PUBLIC_URL` correto.
+O app abre duas portas: **5187** (backend: `/api`, `/webhooks`, `/livro`, `/health`) e **5188** (frontend: site, painel e páginas de gravação/ouvir, que repassa as rotas do backend para a 5187). Aponte o proxy HTTPS (Nginx, Caddy, Traefik) para a **5188**. Para rodar tudo numa porta só, use `FRONTEND_PORT=0`. O webhook do WAHA e os QR codes dependem de `PUBLIC_URL` correto.
 
 ## Estrutura
 

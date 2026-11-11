@@ -4,6 +4,7 @@ services:
     restart: unless-stopped
     env_file: .env
     ports:
-      - "3000:3000"
+      - "5187:5187"   # backend (API / webhooks)
+      - "5188:5188"   # frontend (site / painel)
     volumes:
       - ./data:/app/data   # áudios gravados: faça backup desta pasta junto com o MySQL

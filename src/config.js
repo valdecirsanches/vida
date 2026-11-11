@@ -12,7 +12,9 @@ const env = (k, d = '') => (process.env[k] ?? d).toString().trim();
 const num = (k, d) => { const v = Number(process.env[k]); return Number.isFinite(v) && process.env[k] !== '' ? v : d; };
 
 export const config = {
-  port: num('PORT', 3000),
+  port: num('PORT', 5187),                 // backend: API, webhooks, livro
+  frontendPort: num('FRONTEND_PORT', 5188), // site e painel (0 = tudo na porta do backend)
+  backendHost: env('BACKEND_HOST', '127.0.0.1'),
   publicUrl: env('PUBLIC_URL', 'http://localhost:3000').replace(/\/$/, ''),
   dataDir: path.resolve(ROOT, env('DATA_DIR', './data')),
   timezone: env('TZ', 'America/Sao_Paulo'),

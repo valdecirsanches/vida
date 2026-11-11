@@ -6,5 +6,5 @@ RUN npm ci --omit=dev
 COPY . .
 ENV NODE_ENV=production DATA_DIR=/app/data
 VOLUME ["/app/data"]
-EXPOSE 3000
+EXPOSE 5187 5188
 CMD ["node", "src/server.js"]
